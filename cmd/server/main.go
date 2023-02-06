@@ -4,7 +4,6 @@ import (
 	"net"
 
 	"github.com/mrityunjaygr8/byredis/utils"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -13,50 +12,26 @@ const (
 	SERVER_PORT = "6739"
 )
 
-func init() {
-	log = logrus.WithFields(logrus.Fields{
-		"host": SERVER_HOST,
-		"port": SERVER_PORT,
-	})
-	log.Logger.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp: true,
-	})
-
-}
-
-var log *logrus.Entry
-
 func main() {
+
+	utils.SetupLogger(SERVER_HOST, SERVER_PORT)
 
 	server, err := net.Listen(SERVER_TYPE, SERVER_HOST+":"+SERVER_PORT)
 	if err != nil {
-		log.Fatal("An error occurred when creating server:", err)
+		utils.Log.Fatal("An error occurred when creating server:", err)
 	}
 	defer server.Close()
-	log.Println("Listening on " + SERVER_HOST + ":" + SERVER_PORT)
-	log.Println("Waiting for client...")
+
+	loop := utils.NewLoop()
+	loop.RunLoop()
+	utils.Log.Println("Listening on " + SERVER_HOST + ":" + SERVER_PORT)
+	utils.Log.Println("Waiting for client...")
 	for {
 		connection, err := server.Accept()
 		if err != nil {
-			log.Fatal("Error accepting: ", err.Error())
+			utils.Log.Fatal("Error accepting: ", err.Error())
 		}
-		log.Println("client connected")
-		go processClient(connection)
+		utils.Log.Println("client connected")
+		loop.AddEvent(connection)
 	}
-}
-
-func processClient(connection net.Conn) {
-	buffer := make([]byte, utils.MAX_MESSAGE_LENGTH+utils.MAX_LENGTH_SECTION_SIZE)
-	_, err := connection.Read(buffer)
-	if err != nil {
-		log.Println("Error reading:", err)
-	}
-	_, msg, err := utils.ReadData(buffer)
-	log.Println("Received: ", msg)
-	resp, err := utils.WriteData("world")
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, err = connection.Write(resp)
-	connection.Close()
 }
