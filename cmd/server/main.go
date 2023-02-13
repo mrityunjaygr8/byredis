@@ -15,23 +15,24 @@ const (
 func main() {
 
 	utils.SetupLogger(SERVER_HOST, SERVER_PORT)
+	log := utils.GetLogger()
 
 	server, err := net.Listen(SERVER_TYPE, SERVER_HOST+":"+SERVER_PORT)
 	if err != nil {
-		utils.Log.Fatal("An error occurred when creating server:", err)
+		log.Fatal("An error occurred when creating server:", err)
 	}
 	defer server.Close()
 
 	loop := utils.NewLoop()
 	loop.RunLoop()
-	utils.Log.Println("Listening on " + SERVER_HOST + ":" + SERVER_PORT)
-	utils.Log.Println("Waiting for client...")
+	log.Println("Listening on " + SERVER_HOST + ":" + SERVER_PORT)
+	log.Println("Waiting for client...")
 	for {
 		connection, err := server.Accept()
 		if err != nil {
-			utils.Log.Fatal("Error accepting: ", err.Error())
+			log.Fatal("Error accepting: ", err.Error())
 		}
-		utils.Log.Println("client connected")
+		log.Println("client connected")
 		loop.AddEvent(connection)
 	}
 }
